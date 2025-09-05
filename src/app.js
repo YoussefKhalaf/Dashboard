@@ -44,7 +44,7 @@ app.use(compression())
 bootstrap(app,express())
 
 //Root endpoint
-app.use('/', (req, res) => {
+app.get('/', (req, res) => {
     res.status(200).json({
         success: true,
         message: "Dashboard Api",
@@ -53,7 +53,7 @@ app.use('/', (req, res) => {
     })
 })
 // health check endpoint
-app.use("/health", (req, res) => {
+app.get("/health", (req, res) => {
     res.status(200).json({
         message: "Server is running",
         data: {
