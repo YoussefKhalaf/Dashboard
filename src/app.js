@@ -1,0 +1,59 @@
+import express from 'express'
+import compression from 'compression'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import cors from 'cors'
+import rateLimit from 'express-rate-limit'
+import { bootstrap } from './app.routers.js'
+import { globalError } from './middleware/globalError.js'
+const app = express()
+
+//security
+app.use(helmet())
+app.use(cors())
+
+//rate limiting
+const limit = rateLimit({
+    windowMs: 15 * 60 * 100,
+    max: 100,
+    message: "Too Many Requests, Please Try Again Later"
+})
+
+//logging
+if (process.env.NODE_ENV === "development") {
+    app.use(morgan('dev'))
+}
+
+//body parser 
+app.use(express.json({
+    limit: "10kb",
+    verify: (req, res, buf) => {
+        const rawData = buf.toString()
+    }
+}))
+
+app.use(express.urlencoded({
+    limit: "10kb",
+    extended: true
+}))
+
+//compression
+app.use(compression())
+
+//routes
+bootstrap(app,express())
+
+// health check endpoint
+app.use("/health", (req, res) => {
+    res.status(200).json({
+        message: "Server is running",
+        data: {
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime()
+        }
+    })
+})
+//global error handler 
+app.use(globalError)
+
+export default app
