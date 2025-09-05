@@ -43,6 +43,15 @@ app.use(compression())
 //routes
 bootstrap(app,express())
 
+//Root endpoint
+app.use('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Sticky Notes Api",
+        version: "1.0.0",
+        environment: process.env.NODE_ENV || "development"
+    })
+})
 // health check endpoint
 app.use("/health", (req, res) => {
     res.status(200).json({
