@@ -1,7 +1,6 @@
-// import app from '../src/app.js';
+// api/index.js
+import app from '../src/app.js';
 import { dbConnection } from '../src/config/dbConnection.js';
-import serverless from 'serverless-http';
-
 let connected = false;
 async function ensureDb() {
     if (!connected) {
@@ -10,10 +9,8 @@ async function ensureDb() {
     }
 }
 
-// حوّل الـ express app إلى serverless handler
-const handler = serverless(app);
-
-export default async function (req, res) {
+// Vercel serverless handler
+export default async function handler(req, res) {
     await ensureDb();
-    return handler(req, res);
+    return app(req, res); // Express app بيتعامل كـ handler
 }
