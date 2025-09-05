@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import cors from 'cors'
 import rateLimit from 'express-rate-limit'
+import mongoose from 'mongoose'
 import { bootstrap } from './app.routers.js'
 import { globalError } from './middleware/globalError.js'
 const app = express()
