@@ -6,8 +6,6 @@ import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import { bootstrap } from './app.routers.js'
 import { globalError } from './middleware/globalError.js'
-import { dbConnection } from '../config/dbConnection.js'
-dbConnection()
 const app = express()
 
 //security
