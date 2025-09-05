@@ -41,7 +41,7 @@ app.use(express.urlencoded({
 app.use(compression())
 
 //routes
-bootstrap(app,express())
+bootstrap(app, express())
 
 //Root endpoint
 app.get('/', (req, res) => {
@@ -53,15 +53,15 @@ app.get('/', (req, res) => {
     })
 })
 // health check endpoint
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        message: "Server is running",
-        data: {
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime()
-        }
-    })
-})
+app.get("/health", async (req, res) => {
+    try {
+        await mongoose.connection.db.admin().ping();
+        res.send("✅ Database Connected!");
+    } catch (err) {
+        res.status(500).send("❌ Database not connected: " + err.message);
+    }
+});
+
 //global error handler 
 app.use(globalError)
 
