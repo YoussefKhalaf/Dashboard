@@ -47,7 +47,7 @@ bootstrap(app,express())
 app.use('/', (req, res) => {
     res.status(200).json({
         success: true,
-        message: "Sticky Notes Api",
+        message: "Dashboard Api",
         version: "1.0.0",
         environment: process.env.NODE_ENV || "development"
     })
