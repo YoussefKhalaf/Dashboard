@@ -1,34 +1,55 @@
-import express from "express";
+import app from "../app.js";
+import { dbConnection } from "../db/connection.js";
 import mongoose from "mongoose";
+import serverless from "serverless-http";
 
-const app = express();
+let isDbConnected = false;
 
-// Middleware عشان نعرف أي request جاي
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
+// Connect once when cold start
+async function ensureDb() {
+    if (!isDbConnected) {
+        try {
+            await dbConnection();
+            isDbConnected = true;
+            console.log("✅ DB connected in cold start");
+        } catch (err) {
+            console.error("❌ DB connection error:", err.message);
+        }
+    }
+}
+
+// Health route
+app.get("/health", async (req, res) => {
+    try {
+        if (mongoose.connection.readyState === 1) {
+            return res.status(200).json({
+                success: true,
+                message: "✅ Database Connected!",
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: "❌ Database not connected",
+            });
+        }
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "❌ Error checking DB: " + err.message,
+        });
+    }
 });
 
-// Route أساسي
-app.get("/", (req, res) => {
-    console.log("GET / route hit ✅");
-    res.send("Hello from Express on Vercel 🚀");
-});
+const expressHandler = serverless(app);
 
-// Health check
-app.get("/health", (req, res) => {
-    console.log("GET /health route hit ✅");
-    res.json({ success: true, message: "Server is healthy" });
-});
-
-// MongoDB connect
-mongoose
-    .connect(process.env.DB_URI)
-    .then(() => {
-        console.log("✅ MongoDB connected successfully");
-    })
-    .catch((err) => {
-        console.error("❌ MongoDB connection error:", err);
-    });
-
-export default app;
+export default async function handler(req, res) {
+    try {
+        await ensureDb(); // connect to DB if not already
+        return expressHandler(req, res);
+    } catch (error) {
+        console.error("Unhandled error in serverless handler:", error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Internal server error" });
+        }
+    }
+}
