@@ -1,7 +1,7 @@
-import app from "../app.js";
-import { dbConnection } from "../db/connection.js";
+import {dbConnection} from '../config/dbConnection.js'
 import mongoose from "mongoose";
 import serverless from "serverless-http";
+import app from "../src/app.js";
 
 let isDbConnected = false;
 
