@@ -1,48 +1,48 @@
 // api/index.js
-import { config } from 'dotenv';
-import serverless from 'serverless-http';
-import mongoose from 'mongoose';
-import app from '../src/app.js';
-import { dbConnection } from '../config/dbConnection.js';
+import { config } from "dotenv";
+import serverless from "serverless-http";
+import mongoose from "mongoose";
+import app from "../src/app.js";   // هنا انت عامل export default app
+import { dbConnection } from "../config/dbConnection.js";
 
-// Load environment variables
+// Load env variables
 config();
 
-let connected = false;
-async function ensureDb() {
-    if (connected) return;
+let isConnected = false;
+
+// Ensure MongoDB connection
+async function connectDb() {
+    if (isConnected) return;
+
     if (!process.env.DB_URI) {
-        throw new Error('Missing DB_URI environment variable');
+        throw new Error("❌ Missing DB_URI environment variable");
     }
-    // Avoid reconnecting across invocations if connection is already open
+
     if (mongoose.connection.readyState === 1) {
-        connected = true;
+        isConnected = true;
         return;
     }
+
     await dbConnection();
-    connected = true;
+    isConnected = true;
+    console.log("✅ MongoDB connected");
 }
 
-// Graceful shutdown for Vercel
-process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, closing database connection');
-    if (mongoose.connection.readyState === 1) {
-        await mongoose.connection.close();
-        console.log('Database connection closed');
-    }
-});
-
-// Vercel serverless handler
+// Wrap Express app with serverless handler
 const expressHandler = serverless(app);
 
 export default async function handler(req, res) {
     try {
-        await ensureDb();
+        await connectDb();
         return expressHandler(req, res);
-    } catch (error) {
-        console.error('Unhandled error in serverless handler:', error);
+    } catch (err) {
+        console.error("❌ Error in handler:", err);
         if (!res.headersSent) {
-            res.status(500).json({ success: false, message: 'Internal server error' });
+            res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: err.message,
+            });
         }
     }
 }
