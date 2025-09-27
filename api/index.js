@@ -1,35 +1,34 @@
-// api/index.js
-import { config } from "dotenv";
-import serverless from "serverless-http";
+import express from "express";
 import mongoose from "mongoose";
-import app from "../src/app.js";
-import { dbConnection } from "../config/dbConnection.js";
 
-// Load environment variables
-config();
+const app = express();
 
-// Wrap Express app with serverless handler
-const expressHandler = serverless(app);
+// Middleware عشان نعرف أي request جاي
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
-export default async function handler(req, res) {
-    console.log("🌍 Incoming request:", req.url);
+// Route أساسي
+app.get("/", (req, res) => {
+    console.log("GET / route hit ✅");
+    res.send("Hello from Express on Vercel 🚀");
+});
 
-    try {
-        // Connect to DB (with caching inside dbConnection.js)
-        if (mongoose.connection.readyState !== 1) {
-            await dbConnection();
-        }
+// Health check
+app.get("/health", (req, res) => {
+    console.log("GET /health route hit ✅");
+    res.json({ success: true, message: "Server is healthy" });
+});
 
-        // Forward request to Express
-        return expressHandler(req, res);
-    } catch (err) {
-        console.error("❌ Error in handler:", err);
-        if (!res.headersSent) {
-            res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                error: err.message,
-            });
-        }
-    }
-}
+// MongoDB connect
+mongoose
+    .connect(process.env.DB_URI)
+    .then(() => {
+        console.log("✅ MongoDB connected successfully");
+    })
+    .catch((err) => {
+        console.error("❌ MongoDB connection error:", err);
+    });
+
+export default app;
